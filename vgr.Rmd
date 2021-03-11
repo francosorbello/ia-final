@@ -1,0 +1,76 @@
+---
+title: "VideoGame Recommender"
+output: html_notebook
+---
+
+Paso 1: importar informacion y librerías
+```{r}
+library("recommenderlab")
+library(dplyr)
+library("ggplot2")
+library(readr)
+ratings <- read.csv("ratings.csv")
+```
+Paso 2: convierto a RealRatingMatrix para poder trabajar con recommenderlab
+```{r}
+ratings_realMatrix <- ratings %>% as("realRatingMatrix")
+#normalizo
+ratings_realMatrix %>% normalize %>% getRatings %>% hist(main = "Rating normalizados por usuario")
+#elimino users con menos de 10 reviews
+ratings10 <-ratings_realMatrix[rowCounts(ratings_realMatrix) >= 10]
+ratings10
+```
+
+Info bonita
+```{r}
+#nro de ocurrencias de cada rating
+v_ratings <- as.vector(ratings10@data)
+v_ratings <- v_ratings[v_ratings != 0]
+v_ratings <- factor(v_ratings)
+qplot(v_ratings,xlab = "Rating",ylab="Ocurrencias")
+
+#heatmap de los ratings
+image(ratings10)
+
+```
+
+Training
+```{r}
+#selecciono elementos al azar. La variable prob indica que uso el 80% para training y el 20% para testing
+set_separator <- sample(x = c(TRUE,FALSE),size = nrow(ratings10),replace = TRUE,prob = c(0.8,0.2))
+
+train_set <- ratings10[set_separator,]
+test_set <- ratings10[!set_separator,]
+rec <- Recommender(train_set,method = "UBCF")
+rec
+```
+Visualization Training
+```{r}
+rec_model <- getModel(rec)
+#nro de veces que un juego estuvo en el top k de otro
+#elem_by_column <- colSums(rec_model$sim > 0)
+#qplot(elem_by_column,xlab = "Suma por columna") + stat_bin(binwidth = 1)
+
+#top juegos que estuvieron en el k de otro
+#which_max <- order(elem_by_column, decreasing = TRUE)[1:6]
+#rownames(rec_model$sim)[which_max]
+```
+
+Prediccion
+```{r}
+pre <- predict(rec,test_set,n=5)
+as(pre,"list")
+```
+Visualizacion prediccion
+```{r}
+#juegos mas recomendados
+recc_matrix <- sapply(pre@items, function(x){
+  colnames(ratings10)[x]
+})
+number_of_items <- factor(table(recc_matrix))
+number_of_items_sorted <- sort(number_of_items, decreasing = TRUE)
+number_of_items_top <- head(number_of_items_sorted, n = 4)
+table_top <- data.frame(names(number_of_items_top),
+number_of_items_top)
+table_top
+```
