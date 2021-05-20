@@ -12,6 +12,7 @@ library(readr)
 ratings <- read.csv("ratings.csv")
 game_info <- read.csv("scrappers/games.csv")
 game_genres <- read.csv("game_genres.csv")
+game_platforms <- read.csv("game_platforms.csv")
 ```
 
 ```{r}

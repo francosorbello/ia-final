@@ -39,6 +39,7 @@ for genre_item in genres:
     genre_list.append(genre_item.replace('\n',''))
 genres.close()
 
+#
 with open('game_genres.csv',mode='w') as num_games:
     games_writer = csv.writer(num_games, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
     

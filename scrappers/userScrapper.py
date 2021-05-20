@@ -1,3 +1,7 @@
+"""
+Para una lista de juegos, busca reviews de dichos juegos en una serie de users preseleccionados
+"""
+
 import requests, time, csv
 
 class GameReview:
@@ -94,6 +98,7 @@ for user_item in users:
 users.close()
 print('Para {} users tardó {} segundos'.format(userCount,time.time()-initTime))
 
+#escribo los resultados en un archivo csv
 with open('ratings.csv',mode='w') as ratings_file:
     rf_writer = csv.writer(ratings_file,delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
     rf_writer.writerow(['userId','gameId','rating'])
@@ -104,7 +109,3 @@ with open('ratings.csv',mode='w') as ratings_file:
             nRev.append(review.name)
             nRev.append(review.rating)
             rf_writer.writerow(nRev)
-
-# resp = requests.get("https://rawg.io/api/users/ibarin/reviews?page_size=40&page=4&key=7a07bcd210364441a3425a8076375615")
-# jResp = resp.json()
-# results = jResp["results"]
