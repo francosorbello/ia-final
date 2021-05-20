@@ -78,7 +78,7 @@ def get_clean_genres(genres):
     return nGenres
 
 def get_release_year(fullDate):
-    dateList = str.split(fullDate,'-')[0]
+    dateList = str.split(fullDate,'-')
     if(len(dateList) > 0):
         return dateList[0]
     else:
@@ -132,7 +132,7 @@ genres.close()
 print('Para {} juegos tardó {} segundos'.format(gameQuant*genreCount,time.time()-initTime))
 
 #paso la info obtenida a un archivo csv
-with open('games_del.csv', mode='w') as games_file:
+with open('scrappers/games.csv', mode='w') as games_file:
     gf_writer = csv.writer(games_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
     gf_writer.writerow(['gameId','title','genres','platforms','releaseYear'])
     for game in gamesList.as_array():
