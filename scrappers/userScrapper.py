@@ -31,13 +31,18 @@ def user_review_request(user,page_number):
 initTime = time.time()
 games = []
 #extraigo los juegos generados por gameScrapper
-with open("/home/rulo/borrar/jQ/games.csv") as gameFile:
+with open("/home/rulo/Documentos/UNCU-LINUX/ia/final/repo/ia-final/scrappers/games.csv") as gameFile:
     game_reader = csv.reader(gameFile,delimiter=',')
+    x = 0
     for row in game_reader:
+        if x==0:
+            x+=1
+            continue
+
         games.append(row[1])
 
 #obtengo los users de un archivo
-users = open("/home/rulo/borrar/jQ/py/users.txt","r")
+users = open("/home/rulo/Documentos/UNCU-LINUX/ia/final/repo/ia-final/scrappers/users.txt","r")
 userCount = 0
 userId = 1
 userList = []

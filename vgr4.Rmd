@@ -1,0 +1,113 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library("recommenderlab")
+library("data.table")
+library(dplyr)
+library(lsa)
+library(readr)
+
+ratings <- read.csv("ratings.csv")
+game_info <- read.csv("scrappers/games.csv")
+game_genres <- read.csv("game_genres.csv")
+```
+
+```{r}
+#transformo a data table para trabajar mas facil
+ratings <- data.table(ratings)
+#creo una nueva matriz donde las filas son users y las columnas son juegos. 
+#La posicion (i,j) indica el rating que el user i le dio al juego j
+ratings_wide <- reshape(data = ratings,
+                        direction="wide",
+                        idvar="userId",
+                        timevar="gameId",
+                        v.names="rating")
+#guardo los userId y los elimino de la tabla
+vector_users <- ratings_wide[,userId]
+ratings_wide[,userId := NULL]
+#cambio el nombre de las columnas al id del juego, eliminando el prefijo "value.*"
+setnames(x = ratings_wide,
+  old = names(ratings_wide),
+  new = substring(names(ratings_wide), 8))
+
+#transformo a realRatingMatrix para poder trabajar con la libreria recommenderlab
+ratings_matrix <- as.matrix(ratings_wide)
+rownames(ratings_matrix) <- vector_users
+ratings_realMatrix <- ratings %>% as("realRatingMatrix")
+
+simitest <- similarity(ratings_realMatrix,method = "cosine", which ="items")
+simitest <- simitest %>% as("matrix")
+```
+Ahora a laburar los atributos de los items
+
+```{r}
+gameInfo_table <- data.table(game_info)
+#elimino columna de id por que no se usa y cambio title por gameId para matchear con la tabla ratings
+gameInfo_table <- gameInfo_table[,gameId := NULL]
+setnames(gameInfo_table,1,"gameId")
+#View(gameInfo_table)
+
+#importo la otra tabla
+gameGenres_table <- data.table(game_genres)
+gameGenres_table <- gameGenres_table[order(title),]
+genres_as_users <- t(gameGenres_table)
+game_names <- genres_as_users[1,]
+colnames(genres_as_users) <- game_names
+genres_as_users <- genres_as_users[-c(1),]
+category_realMatrix <- genres_as_users %>% as("realRatingMatrix")
+```
+
+Armo los modelos
+
+```{r}
+#separo la data en 80/20 para training y testing respectivamente
+set_separator <- sample(x = c(TRUE,FALSE),size = nrow(ratings_realMatrix),replace = TRUE,prob = c(0.8,0.2))
+
+train_set <- ratings_realMatrix[set_separator,]
+test_set <- ratings_realMatrix[!set_separator,]
+#View(train_set)
+
+#creo recomender basado en ratings usando IBCF
+rec <- Recommender(train_set,method = "IBCF",parameter=list(method="pearson"))
+dist_ratings <- as(rec@model$sim, "matrix")
+image(dist_ratings)
+#View(dist_ratings)
+#dim(dist_ratings)
+
+```
+Calculo la matriz de distancia para las categorias
+
+```{r}
+cat_similarity <- similarity(category_realMatrix,method = "cosine", which ="items")
+cat_similarity <- cat_similarity %>% as("matrix")
+
+genres_users_num <- apply(genres_as_users,2, FUN = as.numeric)
+prueba <- cosine(genres_users_num)
+
+#la funcion similarity() me devuelve la distancia entre los items.
+#como yo luego uso esta matriz como peso, quiero que los valores esten invertidos
+cat_similarity <- 1 - cat_similarity
+cat_similarity <- cat_similarity[rownames(dist_ratings),colnames(dist_ratings)]
+```
+
+Uno las matrices de categoria y ratings
+
+```{r}
+cat_weight <- 0.25
+final_dist <- cat_similarity * cat_weight + dist_ratings * (1 - cat_weight)
+image(final_dist)
+```
+
+Obtengo recomendaciones
+
+```{r}
+rec@model$sim <- as(final_dist,"dgCMatrix")
+n_rec <- 10
+predicted <- predict(object = rec, newdata = test_set, n = n_rec)
+aaa <- getList(predicted)
+aaa[1]
+typeof(predicted)
+```
+

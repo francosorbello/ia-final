@@ -9,13 +9,13 @@ library("recommenderlab")
 library(dplyr)
 library("ggplot2")
 library(readr)
-ratings <- read.csv("ratings.csv")
+ratings <- read.csv("scrappers/ratings.csv")
 ```
 Paso 2: convierto a RealRatingMatrix para poder trabajar con recommenderlab
 ```{r}
 ratings_realMatrix <- ratings %>% as("realRatingMatrix")
 #normalizo
-ratings_realMatrix %>% normalize %>% getRatings %>% hist(main = "Rating normalizados por usuario")
+#ratings_realMatrix %>% normalize %>% getRatings %>% hist(main = "Rating normalizados por usuario")
 #elimino users con menos de 10 reviews
 ratings10 <-ratings_realMatrix[rowCounts(ratings_realMatrix) >= 10]
 ratings10
@@ -41,12 +41,15 @@ set_separator <- sample(x = c(TRUE,FALSE),size = nrow(ratings10),replace = TRUE,
 
 train_set <- ratings10[set_separator,]
 test_set <- ratings10[!set_separator,]
+train_set
 rec <- Recommender(train_set,method = "UBCF")
 rec
 ```
 Visualization Training
 ```{r}
 rec_model <- getModel(rec)
+rec_model
+
 #nro de veces que un juego estuvo en el top k de otro
 #elem_by_column <- colSums(rec_model$sim > 0)
 #qplot(elem_by_column,xlab = "Suma por columna") + stat_bin(binwidth = 1)

@@ -5,7 +5,7 @@ import requests, csv, time
 
 
 class Game:
-    def __init__(self,title,id,genres,platforms):
+    def __init__(self,title,id,genres,platforms,year_release):
         """
         Constructor de la clase
         Atributos
@@ -14,11 +14,13 @@ class Game:
         id : id del juego establecido por la api
         genres : lista de generos a los que pertenece el juego
         plaforms : lista de plataformas en las que ha sido publicado
+        year_release: año en el que fue publicado
         """
         self.title = title
         self.id = id
         self.genres = genres
         self.platforms = platforms
+        self.year_release = year_release
 
     def as_array(self):
         """Transforma el objeto en una lista facil de guardar en un archivo"""
@@ -75,6 +77,13 @@ def get_clean_genres(genres):
         nGenres.append(genre["slug"])
     return nGenres
 
+def get_release_year(fullDate):
+    dateList = str.split(fullDate,'-')[0]
+    if(len(dateList) > 0):
+        return dateList[0]
+    else:
+        return ""
+
 def get_clean_platforms(platforms):
     """
     Transforma las plataformas en las que esta un juego a una lista de solo los nombres
@@ -87,7 +96,7 @@ def get_clean_platforms(platforms):
 
 initTime = time.time()
 
-gameQuant = 5 #cantidad de juegos que extraigo por genero
+gameQuant = 20 #cantidad de juegos que extraigo por genero
 gamesList = GameList()
 
 #busco gameQuant juegos para cada genero que tengo guardado en un archivo
@@ -109,7 +118,8 @@ for genre_item in genres:
                     Game(
                         gm["slug"],gm["id"],
                         get_clean_genres(gm["genres"]),
-                        get_clean_platforms(gm["platforms"])
+                        get_clean_platforms(gm["platforms"]),
+                        get_release_year(gm["released"])
                         )
                     )
                 currentGameQuant += 1
@@ -122,14 +132,15 @@ genres.close()
 print('Para {} juegos tardó {} segundos'.format(gameQuant*genreCount,time.time()-initTime))
 
 #paso la info obtenida a un archivo csv
-with open('games.csv', mode='w') as games_file:
+with open('games_del.csv', mode='w') as games_file:
     gf_writer = csv.writer(games_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-    gf_writer.writerow(['gameId','title','genres','platforms'])
+    gf_writer.writerow(['gameId','title','genres','platforms','releaseYear'])
     for game in gamesList.as_array():
         nGame = []
         nGame.append(game.id)
         nGame.append(game.title)
         nGame.append(list_to_string(game.genres))
         nGame.append(list_to_string(game.platforms))
+        nGame.append(game.year_release)
         gf_writer.writerow(nGame)
 games_file.close()
