@@ -48,7 +48,7 @@ with open("/home/rulo/Documentos/UNCU-LINUX/ia/final/repo/ia-final/scrappers/gam
 #obtengo los users de un archivo
 users = open("/home/rulo/Documentos/UNCU-LINUX/ia/final/repo/ia-final/scrappers/users.txt","r")
 userCount = 0
-userId = 1
+userId = 1000
 userList = []
 for user_item in users:
     userCount += 1
